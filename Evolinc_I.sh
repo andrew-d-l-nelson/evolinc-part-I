@@ -2,21 +2,21 @@
 # If something doesn't work, you can blame Andrew Nelson (andrew.d.l.nelson@gmail.com)
 # Script to process cuffcompare output file to generate lincRNA
 # Usage: 
-# sh lincRNA_pipeline.sh -c cuffcompare_or_cufflinks_output.gtf -g Genome_of_your_species_of_interest.fasta -r coding_gene_reference_file.fasta -b Transposable_element_database.fasta
+# sh lincRNA_pipeline.sh -c cuffcompare_or_cufflinks_output.gtf -g Genome_of_your_species_of_interest.fasta -r coding_gene_reference_file.fasta -t Transposable_element_database.fasta
 
-while getopts ":b:c:g:hr:" opt; do
+while getopts ":t:c:g:hr:" opt; do
   case $opt in
-    b)
-      blastfile=$OPTARG
+    t)
+      tedb=$OPTARG
       ;;
     c)
-      comparefile=$OPTARG
+      cuffmerge=$OPTARG
       ;;
     h)	echo 	"USAGE : sh Evolinc_part_I.sh 
 		          -c 	</path/to/cuffcompare_output file>
 	 		  -g 	</path/to/reference genome file>
                           -r    </path/to/reference CDS file>
-			  -b 	</path/to/RNA file>"
+			  -t 	</path/to/transposable element database file>"
       exit 1
       ;;
     g)
@@ -38,17 +38,17 @@ done
 
 wget -O- https://github.com/TransDecoder/TransDecoder/archive/2.0.1.tar.gz | tar xzvf -
 
-makeblastdb -in $blastfile -dbtype nucl -out $blastfile.blast.out
+makeblastdb -in $tedb -dbtype nucl -out $tedb.blast.out
 
 makeblastdb -in $referenceCDS -dbtype nucl -out $referenceCDS.blast.out
 
 mkdir -p output
 
-perl grab_promoter_regions.pl $comparefile $comparefile.promoters.gtf
+perl grab_promoter_regions.pl $cuffmerge $cuffmerge.promoters.gtf
 
-gffread $comparefile.promoters.gtf -g $referencegenome -w output/$comparefile.promoters.fasta
+gffread $cuffmerge.promoters.gtf -g $referencegenome -w output/$cuffmerge.promoters.fasta
 
-grep '"u"' $comparefile | \
+grep '"u"' $cuffmerge | \
 	gffread -w transcripts_u.fa -g $referencegenome - && \
 	python2.7 get_gene_length_filter.py transcripts_u.fa transcripts_u_filter.fa && \
 	TransDecoder-2.0.1/TransDecoder.LongOrfs -t transcripts_u_filter.fa
@@ -73,7 +73,7 @@ python ../extract_sequences-A.py longest_orfs.cds.genes.not.genes ../transcripts
 sed 's/ /./' longest_orfs.cds.genes.not.genes.fa \
   > temp && mv temp longest_orfs.cds.genes.not.genes.fa
 
-blastn -query longest_orfs.cds.genes.not.genes.fa -db ../$blastfile.blast.out -out longest_orfs.cds.genes.not.genes.fa.blast.out -outfmt 6
+blastn -query longest_orfs.cds.genes.not.genes.fa -db ../$tedb.blast.out -out longest_orfs.cds.genes.not.genes.fa.blast.out -outfmt 6
 
 python ../filter_sequences.py longest_orfs.cds.genes.not.genes.fa.blast.out longest_orfs.cds.genes.not.genes.fa.blast.out.filtered
 
