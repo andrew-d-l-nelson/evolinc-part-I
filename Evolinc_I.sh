@@ -2,7 +2,7 @@
 # If something doesn't work, you can blame Andrew Nelson (andrew.d.l.nelson@gmail.com)
 # Script to process cuffcompare output file to generate lincRNA
 # Usage: 
-# sh lincRNA_pipeline.sh -c cuffcompare_or_cufflinks_output.gtf -g Genome_of_your_species_of_interest.fasta -r coding_gene_reference_file.fasta -b Repeat_element_database.fasta
+# sh lincRNA_pipeline.sh -c cuffcompare_or_cufflinks_output.gtf -g Genome_of_your_species_of_interest.fasta -r coding_gene_reference_file.fasta -b Transposable_element_database.fasta
 
 while getopts ":b:c:g:hr:" opt; do
   case $opt in
@@ -43,6 +43,10 @@ makeblastdb -in $blastfile -dbtype nucl -out $blastfile.blast.out
 makeblastdb -in $referenceCDS -dbtype nucl -out $referenceCDS.blast.out
 
 mkdir -p output
+
+perl grab_promoter_regions.pl $comparefile $comparefile.promoters.gtf
+
+gffread $comparefile.promoters.gtf -g $referencegenome -w output/$comparefile.promoters.fasta
 
 grep '"u"' $comparefile | \
 	gffread -w transcripts_u.fa -g $referencegenome - && \
@@ -115,3 +119,5 @@ grep -v -f lincRNA_non_redundant_filtered_blast.out.blast.out.uniq lincRNA_non_r
 python ../extract_sequences-B.py lincRNA_non_redundant_filtered.genes.only_filtered lincRNA_non_redundant_filtered.genes.fa lincRNA_non_redundant_filtered.genes.only_filtered.fa
 
 python ../fasta_header_rename.py lincRNA_non_redundant_filtered.genes.only_filtered.fa ../output/Final_filtered_lincRNAs.fasta
+
+perl ../lincRNA_demographics.pl ../output/Final_filtered_lincRNAs.fasta >../output/LincRNA_demographics.txt
