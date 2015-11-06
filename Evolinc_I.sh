@@ -46,7 +46,16 @@ mkdir -p output
 
 perl prepare_promoter_gtf.pl $cuffmerge $cuffmerge.promoters.gtf
 
-gffread $cuffmerge.promoters.gtf -g $referencegenome -w output/$cuffmerge.promoters.fasta
+gffread $cuffmerge.promoters.gtf -g $referencegenome -w $cuffmerge.promoters.fasta
+
+mv $cuffmerge.promoters.fasta ./output/
+mv $referenceCDS.blast.out.nhr ./transcripts_u_filter.fa.transdecoder_dir/
+mv $referenceCDS.blast.out.nin ./transcripts_u_filter.fa.transdecoder_dir/
+mv $referenceCDS.blast.out.nsq ./transcripts_u_filter.fa.transdecoder_dir/
+mv $tedb.blast.out.nhr ./transcripts_u_filter.fa.transdecoder_dir/
+mv $tedb.blast.out.nin ./transcripts_u_filter.fa.transdecoder_dir/
+mv $tedb.blast.out.nsq ./transcripts_u_filter.fa.transdecoder_dir/
+
 #Need to add a step towards the end that will cull this file of promoter elements to only contain the filtered set
 grep '"u"' $cuffmerge | \
 	gffread -w transcripts_u.fa -g $referencegenome - && \
@@ -73,7 +82,7 @@ python ../extract_sequences-A.py longest_orfs.cds.genes.not.genes ../transcripts
 sed 's/ /./' longest_orfs.cds.genes.not.genes.fa \
   > temp && mv temp longest_orfs.cds.genes.not.genes.fa
 
-blastn -query longest_orfs.cds.genes.not.genes.fa -db ../$tedb.blast.out -out longest_orfs.cds.genes.not.genes.fa.blast.out -outfmt 6
+blastn -query longest_orfs.cds.genes.not.genes.fa -db $tedb.blast.out -out longest_orfs.cds.genes.not.genes.fa.blast.out -outfmt 6
 
 python ../filter_sequences.py longest_orfs.cds.genes.not.genes.fa.blast.out longest_orfs.cds.genes.not.genes.fa.blast.out.filtered
 
@@ -95,7 +104,7 @@ grep ">" lincRNA_genes_non_redundant.fa \
   > lincRNA_gene_non_redundant.genes_only
 
 
-blastn -query lincRNA_genes_non_redundant.fa -db ../$referenceCDS.blast.out -out lincRNA_non_redundant.fa_cds_blast.out -evalue 1e-30 -outfmt 6
+blastn -query lincRNA_genes_non_redundant.fa -db $referenceCDS.blast.out -out lincRNA_non_redundant.fa_cds_blast.out -evalue 1e-30 -outfmt 6
 
 python ../linc_RNA_filter-A.py lincRNA_non_redundant.fa_cds_blast.out lincRNA_non_redundant.fa_cds_blast.out.filtered
 
@@ -124,4 +133,5 @@ perl ../lincRNA_demographics.pl ../output/Final_filtered_lincRNAs.fasta >../outp
 
 perl ../lincRNA_count.pl ../transcripts_u.fa longest_orfs.cds.genes.not.genes.fa lincRNA.genes.fa lincRNA_non_redundant_filtered.genes.fa lincRNA_non_redundant_filtered.genes.only_filtered.fa ../output/Final_filtered_lincRNAs.fasta >../output/lincRNA_count.txt
 
-print "Finished Evolinc"
+echo "All necessary files written to output"
+echo "Finished Evolinc!"
