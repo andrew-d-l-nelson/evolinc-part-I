@@ -44,10 +44,10 @@ makeblastdb -in $referenceCDS -dbtype nucl -out $referenceCDS.blast.out
 
 mkdir -p output
 
-perl grab_promoter_regions.pl $cuffmerge $cuffmerge.promoters.gtf
+perl prepare_promoter_gtf.pl $cuffmerge $cuffmerge.promoters.gtf
 
 gffread $cuffmerge.promoters.gtf -g $referencegenome -w output/$cuffmerge.promoters.fasta
-
+#Need to add a step towards the end that will cull this file of promoter elements to only contain the filtered set
 grep '"u"' $cuffmerge | \
 	gffread -w transcripts_u.fa -g $referencegenome - && \
 	python2.7 get_gene_length_filter.py transcripts_u.fa transcripts_u_filter.fa && \
@@ -121,3 +121,7 @@ python ../extract_sequences-B.py lincRNA_non_redundant_filtered.genes.only_filte
 python ../fasta_header_rename.py lincRNA_non_redundant_filtered.genes.only_filtered.fa ../output/Final_filtered_lincRNAs.fasta
 
 perl ../lincRNA_demographics.pl ../output/Final_filtered_lincRNAs.fasta >../output/LincRNA_demographics.txt
+
+perl ../lincRNA_count.pl ../transcripts_u.fa longest_orfs.cds.genes.not.genes.fa lincRNA.genes.fa lincRNA_non_redundant_filtered.genes.fa lincRNA_non_redundant_filtered.genes.only_filtered.fa ../output/Final_filtered_lincRNAs.fasta >../output/lincRNA_count.txt
+
+print "Finished Evolinc"
